@@ -37,26 +37,25 @@ EC1101S::EC1101S(uint8_t pinA, uint8_t pinB, uint8_t pinSW) :
  * This function configures the rotary encoder pins, sets up their initial states,
  * and attaches an interrupt to handle changes on the A pin. It should be called
  * before using any other functions of the EC1101S class.
- * 
- * Example usage:
+ * * Example usage:
  * @code
  * encoder.begin();              // Initialize the encoder
  * @endcode
  */
 void EC1101S::begin()
 {
-    instance_ = this;  // Tek encoder kullanacaksak bu pointer yeterli
+    instance_ = this;  // This pointer is sufficient if we use a single encoder
 
-    // Pin ayarları
+    // Pin settings
     pinMode(_pinA, INPUT_PULLUP);
     pinMode(_pinB, INPUT_PULLUP);
     pinMode(_pinSW, INPUT_PULLUP);
 
-    // Önceki pin değerlerini okuyalım
+    // Read the previous pin values
     _prevA = digitalRead(_pinA);
     _prevB = digitalRead(_pinB);
 
-    // Interrupt ekle
+    // Add interrupt
     attachInterrupt(digitalPinToInterrupt(_pinA), EC1101S::isrA, CHANGE);
 }
 
@@ -125,19 +124,19 @@ uint8_t EC1101S::getCount() const
  * Example usage:
  * @code
  * while (true) {
- *     encoder.update();  // Update the encoder state
+ * encoder.update();  // Update the encoder state
  * }
  * @endcode
  */
 void EC1101S::update()
 {
-    // Debounce sayacını azalt
+    // Decrease the debounce counter
     if (_debounce)
     {
         _debounce--;
     }
 
-    // Tıklama (döndürme) olduysa, count değerini ayarla
+    // If a click (rotation) occurred, set the count value
     if (_click)
     {
         if (_CW)
@@ -154,7 +153,7 @@ void EC1101S::update()
                 _count--;
             }
         }
-        _click = 0; // İşledikten sonra sıfırla
+        _click = 0; // Reset after processing
     }
 }
 
@@ -176,7 +175,7 @@ void EC1101S::update()
  */
 void IRAM_ATTR EC1101S::isrA()
 {
-    // Bu static fonksiyon, instance_ üzerinden sınıf içi fonksiyonu çağırır
+    // This static function calls the class member function via instance_
     if (instance_ != nullptr)
     {
         instance_->checkEncoder();
@@ -197,10 +196,10 @@ void IRAM_ATTR EC1101S::isrA()
  * @code
  * void IRAM_ATTR EC1101S::isrA()
  * {
- *     if (instance_ != nullptr)
- *     {
- *         instance_->checkEncoder();  // Calls this function
- *     }
+ * if (instance_ != nullptr)
+ * {
+ * instance_->checkEncoder();  // Calls this function
+ * }
  * }
  * @endcode
  */
@@ -209,21 +208,21 @@ void EC1101S::checkEncoder()
     terminalA = digitalRead(_pinA);
     terminalB = digitalRead(_pinB);
     
-    // Hem A hem B'deki değişimi kontrol et
+    // Check the change on both A and B
     if ((_prevA != terminalA) || (_prevB != terminalB))
     {
-        // Eğer A pininde değişiklik olduysa
+        // If there was a change on pin A
         if (_prevA != terminalA)
         {
-            // Yön hesaplama:
+            // Direction calculation:
             if ((terminalB && !terminalA) ||
                 (!terminalB && terminalA))
             {
-                _CW = 1; // saat yönü
+                _CW = 1; // clockwise
             }
             else
             {
-                _CW = 0; // saat tersi
+                _CW = 0; // counter-clockwise
             }
 
             _prevA = terminalA;
@@ -232,7 +231,7 @@ void EC1101S::checkEncoder()
         }
         else
         {
-            // Eğer B pininde değişiklik olduysa
+            // If there was a change on pin B
             if ((!terminalB && terminalA) ||
                 (terminalB && !terminalA))
             {
